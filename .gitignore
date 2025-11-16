@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*$py.class
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+.python-version
+
+# Django
+*.log
+*.pot
+*.pyc
+db.sqlite3
+media/
+staticfiles/
+local_settings.py
+
+# Migrations (ignore all except __init__.py)
+*/migrations/*
+!*/migrations/__init__.py
+
+# VS Code / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Coverage / test
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+# Media files
+/media/
