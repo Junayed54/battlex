@@ -15,7 +15,7 @@ SECRET_KEY = 'django-insecure-tbh_%!m*n)5%041)i%z8!(=yj%9jlwvdqlqplb#alsv&@%26im
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['161.97.141.58', ]
 
 
 # Application definition
@@ -71,14 +71,24 @@ AUTH_USER_MODEL = 'users.User'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'battle_x',  # Your database name
+        'USER': 'root',     # The new user you just created
+        'PASSWORD': 'Bridgers@123',  # The password for the new user
+        'HOST': 'localhost',
+        'PORT': '3306',  # Default MySQL port
     }
 }
-
-
 
 CACHES = {
     'default': {
