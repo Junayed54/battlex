@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'nested_admin',
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',
     'users',
     'quiz',
     'tournaments',
@@ -37,6 +38,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -179,3 +182,12 @@ SIMPLE_JWT = {
 
 
 LEADERBOARD_LIMIT = 10
+
+CORS_ALLOWED_ORIGINS = [
+    "http://161.97.141.58:8005",
+    "http://161.97.141.58:8081",
+    "http://localhost:8081",
+]
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_ALL_ORIGINS = True
