@@ -3,10 +3,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import authenticate, get_user_model
-
-from .serializers import UserSerializer, UserRegistrationSerializer, UserLoginSerializer
+from rest_framework.views import APIView
+from .serializers import *
 from quiz.models import *
 from .models import *
+
 User = get_user_model()
 
 class UserRegistrationView(generics.CreateAPIView):
@@ -50,7 +51,7 @@ class UserRegistrationView(generics.CreateAPIView):
 
             # Transfer data
             QuizAttempt.objects.filter(guest_user=guest_user, user__isnull=True).update(user=user)
-            UserActivityLog.objects.filter(user=guest_user).update(user=guest_user)
+            UserActivityLog.objects.filter(user=guest_user, user__isnull=True).update(user=guest_user)
 
         return Response(
             {
@@ -62,6 +63,7 @@ class UserRegistrationView(generics.CreateAPIView):
             },
             status=status.HTTP_200_OK,
         )
+        
 
 
 
@@ -132,9 +134,28 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 from rest_framework.permissions import IsAdminUser
+
 from .models import UserOpenAccount
+
 from .serializers import UserOpenAccountSerializer
 class UserOpenAccountViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = UserOpenAccount.objects.all().order_by("-last_seen_at")
     serializer_class = UserOpenAccountSerializer
     permission_classes = [IsAdminUser] 
+    
+    
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return Response({
+            "type": "success",
+            "message": "Profile retrieved successfully",
+            "data": {
+                "name": getattr(user, "name", ""),
+                "email": user.email,
+                "profile_image": getattr(user, "profile_picture", None)
+            }
+        })

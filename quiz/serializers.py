@@ -56,3 +56,15 @@ class CategorySerializer(serializers.ModelSerializer):
         
         category = Category.objects.create(**validated_data)
         return category
+
+
+
+class LeaderboardSerializer(serializers.ModelSerializer):
+    userId = serializers.IntegerField(source="user.id")
+    userName = serializers.CharField(source="user.username")
+    msisdn = serializers.CharField(source="user.phone_number")   # if field name is different, update here
+    time = serializers.DateTimeField(source="attempt_date")
+
+    class Meta:
+        model = Leaderboard
+        fields = ["userId", "userName", "msisdn", "rank", "time", "score"]

@@ -15,7 +15,7 @@ SECRET_KEY = 'django-insecure-tbh_%!m*n)5%041)i%z8!(=yj%9jlwvdqlqplb#alsv&@%26im
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['161.97.141.58', ]
+ALLOWED_HOSTS = ['161.97.141.58', '127.0.0.1']
 
 
 # Application definition
@@ -155,14 +155,24 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': [
+#         'users.middleware.GuestAuthentication',  # Add the correct path to GuestAuthentication
+#         'rest_framework.authentication.SessionAuthentication',  # Optional: include for session-based auth
+#         'rest_framework.authentication.TokenAuthentication',  # Optional: include for token-based auth
+#     ],
+#     'EXCEPTION_HANDLER': 'quiz.utils.custom_exception_handler.custom_exception_handler',  # Your custom exception handler
+# }
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'users.middleware.GuestAuthentication',  # Add the correct path to GuestAuthentication
-        'rest_framework.authentication.SessionAuthentication',  # Optional: include for session-based auth
-        'rest_framework.authentication.TokenAuthentication',  # Optional: include for token-based auth
+        'rest_framework_simplejwt.authentication.JWTAuthentication',  
+        'users.middleware.GuestAuthentication',  
+        'rest_framework.authentication.SessionAuthentication',  
+        'rest_framework.authentication.TokenAuthentication',
     ],
-    'EXCEPTION_HANDLER': 'quiz.utils.custom_exception_handler.custom_exception_handler',  # Your custom exception handler
 }
+
 from datetime import timedelta
 
 SIMPLE_JWT = {

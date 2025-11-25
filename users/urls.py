@@ -21,4 +21,6 @@ urlpatterns = [
 
 urlpatterns += [
     path("api/", include(router.urls)),
+    path("api/user/profile/", UserProfileView.as_view(), name="user-profile"),
+
 ]

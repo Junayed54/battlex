@@ -62,3 +62,9 @@ class UserOpenAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserOpenAccount
         fields = "__all__"
+        
+        
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["name", "email", "profile_image"]

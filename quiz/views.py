@@ -9,7 +9,7 @@ from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import AccessToken
-
+from collections import defaultdict
 from users.middleware import CombinedJWTOrGuestAuthentication 
 from .models import *
 from .serializers import *
@@ -1328,4 +1328,76 @@ class SubmitAnswersView(APIView):
                 "total_questions": quiz_attempt.total_questions,
                 "quiz_completed": (quiz_attempt.correct_answers + quiz_attempt.wrong_answers == quiz_attempt.total_questions),
             },
+        }, status=200)
+
+
+
+
+class ItemLeaderboardView(APIView):
+    authentication_classes = [CombinedJWTOrGuestAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request, item_id, *args, **kwargs):
+        # Determine if the requesting user is authenticated
+        is_authenticated = request.user.is_authenticated
+
+        # Fetch the item
+        try:
+            item = Item.objects.get(id=item_id)
+        except Item.DoesNotExist:
+            return Response({
+                "type": "error",
+                "message": "Invalid item.",
+                "data": {}
+            }, status=200)
+
+        # Fetch all attempts for this item
+        attempts_qs = QuizAttempt.objects.filter(item=item)
+
+        # Aggregate scores per user (or guest_user)
+        user_scores = defaultdict(lambda: {"total_score": 0, "attempts": 0, "first_attempt_date": None})
+
+        for attempt in attempts_qs:
+            user_obj = attempt.user or attempt.guest_user
+            if not user_obj:
+                continue
+
+            user_id = user_obj.id
+
+            user_scores[user_id]["total_score"] += attempt.score
+            user_scores[user_id]["attempts"] += 1
+            if user_scores[user_id]["first_attempt_date"] is None:
+                user_scores[user_id]["first_attempt_date"] = attempt.attempt_date
+            else:
+                # Keep the earliest attempt date
+                user_scores[user_id]["first_attempt_date"] = min(user_scores[user_id]["first_attempt_date"], attempt.attempt_date)
+
+            user_scores[user_id]["user_obj"] = user_obj
+
+        # Sort leaderboard
+        leaderboard_list = sorted(
+            user_scores.values(),
+            key=lambda x: (-x["total_score"], x["attempts"], x["first_attempt_date"])
+        )
+
+        # Add rank
+        final_leaderboard = []
+        for idx, entry in enumerate(leaderboard_list, start=1):
+            user_obj = entry["user_obj"]
+            final_leaderboard.append({
+                "userId": user_obj.id,
+                "userName": user_obj.username if is_authenticated and hasattr(user_obj, "username") else "Anonymous",
+                "rank": idx,
+                "total_score": entry["total_score"],
+                "attempts": entry["attempts"],
+                "first_attempt_date": entry["first_attempt_date"]
+            })
+
+        return Response({
+            "type": "success",
+            "message": "Leaderboard fetched successfully.",
+            "data": {
+                "item_id": item_id,
+                "leaderboard": final_leaderboard
+            }
         }, status=200)
