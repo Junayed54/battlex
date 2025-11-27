@@ -18,6 +18,19 @@ import uuid
 
 from tournaments.models import *
 
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.exceptions import AuthenticationFailed
+import jwt
+from jwt.exceptions import InvalidTokenError
+from django.conf import settings
+import datetime
+
 class QuizCreateAPIView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -280,304 +293,12 @@ class GetQuestionsView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-# class GetQuestionView(APIView):
-#     def get(self, request, question_id=None):
-#         # If no question_id is passed, return the first question
-#         if not question_id:
-#             first_question = Question.objects.first()
-#             if not first_question:
-#                 return Response({"message": "No questions available"}, status=status.HTTP_400_BAD_REQUEST)
-#             return Response({
-#                 "question_id": first_question.id,
-#                 "question_text": first_question.question_text,
-#                 "options": [{"id": option.id, "text": option.option_text} for option in first_question.options.all()],
-#             })
-
-#         # Get the current question by question_id
-#         try:
-#             current_question = Question.objects.get(id=question_id)
-#         except Question.DoesNotExist:
-#             return Response({"message": "Question not found"}, status=status.HTTP_404_NOT_FOUND)
-
-#         # Fetch the next question based on the current question
-#         next_question = Question.objects.filter(id__gt=current_question.id).first()
-        
-#         if next_question:
-#             return Response({
-#                 "question_id": current_question.id,
-#                 "question_text": current_question.question_text,
-#                 "options": [{"id": option.id, "text": option.option_text} for option in current_question.options.all()],
-#                 "next_question_id": next_question.id,
-#             })
-#         else:
-#             return Response({
-#                 "message": "No more questions available",
-#                 "quiz_completed": True
-#             }, status=status.HTTP_200_OK)
 
 
 
 
 
-# class DashboardView(APIView):
-#     authentication_classes = [JWTAuthentication]
-#     permission_classes = [AllowAny]  # Allow access, but restrict private content
 
-#     def get(self, request, *args, **kwargs):
-#         user = None
-#         response_type = "success"
-#         message = "Dashboard fetched successfully"
-
-#         # Authenticate the user using JWT
-#         try:
-#             jwt_auth = JWTAuthentication()
-#             auth_result = jwt_auth.authenticate(request)  # Returns (user, auth) or None
-#             if auth_result:
-#                 user, auth = auth_result  # Set user if authentication is successful
-#         except AuthenticationFailed:
-#             pass  # User remains None if authentication fails
-
-#         # Get the user_transaction_id (from session or user)
-#         if user:
-#             # If the user is authenticated, set a guest-like identifier or exclude the ID
-#             user_transaction_id = None  # Do not send user.id for authenticated users
-#         else:
-#             # If the user is not authenticated, get the guest ID from session
-#             user_transaction_id = request.session.get("guest_id")
-
-#         quizzes = Quiz.objects.all()
-#         quiz_data = []
-
-#         for quiz in quizzes:
-#             categories = Category.objects.filter(quiz=quiz)
-#             filtered_categories = []
-
-#             for category in categories:
-#                 # Hide private categories for unauthenticated users
-#                 if not user and category.access_mode == "private":
-#                     continue  
-
-#                 items = Item.objects.filter(category=category)
-#                 filtered_items = []
-
-#                 for item in items:
-#                     # Hide private items for unauthenticated users
-#                     if not user and item.access_mode == "private":
-#                         continue  
-
-#                     quiz_attempt_data = None
-#                     if user:
-#                         quiz_attempt = QuizAttempt.objects.filter(user=user, item=item).first()
-#                         if quiz_attempt:
-#                             quiz_attempt_data = {
-#                                 "total_questions": quiz_attempt.total_questions,
-#                                 "correct_answers": quiz_attempt.correct_answers,
-#                                 "wrong_answers": quiz_attempt.wrong_answers,
-#                                 "score": quiz_attempt.score,
-#                             }
-
-#                     leaderboard_data = Leaderboard.objects.filter(item=item).order_by('-score')[:10]
-#                     leaderboard = [
-#                         {
-#                             "user": entry.user.username,
-#                             "score": entry.score,
-#                             "rank": entry.rank,
-#                         }
-#                         for entry in leaderboard_data
-#                     ]
-
-#                     filtered_items.append({
-#                         "item_id": str(item.id),
-#                         "item_title": item.title,
-#                         "item_subtitle": item.subtitle,
-#                         "item_button_label": item.button_label or "Play",
-#                         "access_mode": item.access_mode or "public",
-#                         "item_type": item.item_type or "default",
-#                         "quiz_attempt": quiz_attempt_data,
-#                         "leaderboard": leaderboard,
-#                     })
-
-#                 # Ensure authenticated users see private categories
-#                 if user or filtered_items:
-#                     filtered_categories.append({
-#                         "category_id": str(category.id),
-#                         "category_title": category.title,
-#                         "category_type": category.category_type or "default",
-#                         "access_mode": category.access_mode,
-#                         "task_items": filtered_items,
-#                     })
-
-#             quiz_data.append({
-#                 "quiz_id": str(quiz.id),
-#                 "quiz_title": quiz.title,
-#                 "quiz_description": quiz.description,
-#                 "total_questions": quiz.total_questions,
-#                 "created_at": quiz.created_at,
-#                 "updated_at": quiz.updated_at,
-#                 "categories": filtered_categories,
-#             })
-
-#         return Response(
-#             {
-#                 "type": response_type,
-#                 "message": message,
-#                 "data": {
-#                     "quizzes": quiz_data,
-#                     "access_token": user_transaction_id  # Send None or guest ID here
-#                 },
-                
-#             },
-#             status=status.HTTP_200_OK
-#         )
-
-
-
-
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import AllowAny
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.exceptions import AuthenticationFailed
-import jwt
-from jwt.exceptions import InvalidTokenError
-from django.conf import settings
-import datetime
-
-# class DashboardView(APIView):
-#     permission_classes = [AllowAny]
-#     authentication_classes = []  # remove default auth; we handle it manually
-
-#     def get(self, request, *args, **kwargs):
-#         user = None
-#         is_guest = False
-#         open_account_id = None
-#         access_token = None
-
-#         # Step 1: Extract token from header
-#         auth_header = request.headers.get("Authorization", "")
-#         if auth_header.startswith("Bearer "):
-#             token = auth_header.split(" ")[1]
-
-#             # Step 2: Try to decode it manually first (for guest tokens)
-#             try:
-#                 decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-#                 if decoded.get("is_guest"):
-#                     is_guest = True
-#                     open_account_id = decoded.get("open_account_id")
-#                     access_token = token
-#             except InvalidTokenError:
-#                 pass
-
-#             # Step 3: If not guest, try normal user auth
-#             if not is_guest:
-#                 try:
-#                     jwt_auth = JWTAuthentication()
-#                     auth_result = jwt_auth.authenticate(request)
-#                     if auth_result:
-#                         user, _ = auth_result
-#                         access_token = token
-#                 except AuthenticationFailed:
-#                     pass
-
-#         # Step 4: If still no access_token, create a new one
-#         if user and not access_token:
-#             refresh = RefreshToken.for_user(user)
-#             access_token = str(refresh.access_token)
-#         elif not user and not access_token:
-#             # Generate a guest token
-#             open_account_id = str(datetime.datetime.utcnow().timestamp())  # simple unique ID
-#             payload = {
-#                 "is_guest": True,
-#                 "open_account_id": open_account_id,
-#                 "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7),
-#                 "iat": datetime.datetime.utcnow(),
-#             }
-#             access_token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
-
-#         # Your original quiz logic
-#         quizzes = Quiz.objects.all()
-#         quiz_data = []
-
-#         for quiz in quizzes:
-#             categories = Category.objects.filter(quiz=quiz)
-#             filtered_categories = []
-
-#             for category in categories:
-#                 if category.access_mode == "private" and not user:
-#                     continue
-
-#                 items = Item.objects.filter(category=category)
-#                 filtered_items = []
-
-#                 for item in items:
-#                     if item.access_mode == "private" and not user:
-#                         continue
-
-#                     quiz_attempt_data = None
-#                     if user:
-#                         quiz_attempt = QuizAttempt.objects.filter(user=user, item=item).first()
-#                         if quiz_attempt:
-#                             quiz_attempt_data = {
-#                                 "total_questions": quiz_attempt.total_questions,
-#                                 "correct_answers": quiz_attempt.correct_answers,
-#                                 "wrong_answers": quiz_attempt.wrong_answers,
-#                                 "score": quiz_attempt.score,
-#                             }
-
-#                     leaderboard_data = Leaderboard.objects.filter(item=item).order_by('-score')[:10]
-#                     leaderboard = [
-#                         {
-#                             "user": entry.user.username,
-#                             "score": entry.score,
-#                             "rank": entry.rank,
-#                         }
-#                         for entry in leaderboard_data
-#                     ]
-
-#                     filtered_items.append({
-#                         "item_id": str(item.id),
-#                         "item_title": item.title,
-#                         "item_subtitle": item.subtitle,
-#                         "item_button_label": item.button_label or "Play",
-#                         "access_mode": item.access_mode or "public",
-#                         "item_type": item.item_type or "default",
-#                         "quiz_attempt": quiz_attempt_data,
-#                         "leaderboard": leaderboard,
-#                     })
-
-#                 if filtered_items:
-#                     filtered_categories.append({
-#                         "category_id": str(category.id),
-#                         "category_title": category.title,
-#                         "category_type": category.category_type or "default",
-#                         "access_mode": category.access_mode,
-#                         "task_items": filtered_items,
-#                     })
-
-#             quiz_data.append({
-#                 "quiz_id": str(quiz.id),
-#                 "quiz_title": quiz.title,
-#                 "quiz_description": quiz.description,
-#                 "total_questions": quiz.total_questions,
-#                 "created_at": quiz.created_at,
-#                 "updated_at": quiz.updated_at,
-#                 "categories": filtered_categories,
-#             })
-
-#         return Response(
-#             {
-#                 "type": "success",
-#                 "message": "Dashboard fetched successfully",
-#                 "data": {
-#                     "quizzes": quiz_data,
-#                     "access_token": access_token,
-#                 },
-#             },
-#             status=status.HTTP_200_OK
-#         )
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -602,156 +323,6 @@ def get_client_ip(request):
         ip = request.META.get('REMOTE_ADDR')
     return ip
 
-# class DashboardView(APIView):
-#     authentication_classes = [JWTAuthentication]
-#     permission_classes = [AllowAny]
-
-#     def get(self, request, *args, **kwargs):
-#         user = None
-#         response_type = "success"
-#         message = "Dashboard fetched successfully"
-#         access_token = None
-#         open_account_id = None
-
-#         jwt_auth = JWTAuthentication()
-#         auth_header = request.headers.get("Authorization", "")
-
-#         # Step 1️⃣: Try authenticating as a real user
-#         try:
-#             auth_result = jwt_auth.authenticate(request)
-#             if auth_result:
-#                 user, _ = auth_result
-                
-#                 if auth_header.startswith("Bearer "):
-#                     access_token = auth_header.split(" ")[1]
-#         except AuthenticationFailed:
-#             pass
-
-#         # Step 2️⃣: If no user, try decoding the token manually (maybe it's a guest token)
-#         if not user and auth_header.startswith("Bearer "):
-#             token = auth_header.split(" ")[1]
-#             try:
-#                 decoded = jwt.decode(token, settings.SIMPLE_JWT['SIGNING_KEY'], algorithms=["HS256"])
-#                 if decoded.get("is_guest"):
-#                     open_account_id = decoded.get("open_account_id")
-#                     access_token = token  # re-use existing token
-#                     # Important: Don't create a new token if valid guest token is found
-#             except jwt.ExpiredSignatureError:
-#                 message = "Guest token expired."
-#                 return Response({"type": "error", "message": message, "data": {}}, status=401)
-#             except jwt.InvalidTokenError:
-#                 message = "Invalid token."
-#                 return Response({"type": "error", "message": message, "data": {}}, status=401)
-
-#         # Step 3️⃣: If still no user and no valid token ➔ Create new guest open_account and token
-#         if not user and not access_token:
-#             client_ip = get_client_ip(request)
-
-#             # Try to find an existing UserOpenAccount with same IP
-#             open_account = UserOpenAccount.objects.filter(ip_address=client_ip, user__isnull=True).first()
-
-#             if open_account:
-#                 open_account_id = str(open_account.id)
-#             else:
-#                 # Create new guest open_account
-#                 open_account_id = str(uuid.uuid4())
-#                 open_account = UserOpenAccount.objects.create(
-#                     id=open_account_id,
-#                     ip_address=client_ip,
-#                     user_agent=request.META.get("HTTP_USER_AGENT", ""),
-#                 )
-
-#             # Now create the new guest token
-#             guest_token = AccessToken()
-#             guest_token.set_exp(lifetime=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'])  # eg. 1 day
-#             guest_token["is_guest"] = True
-#             guest_token["open_account_id"] = open_account_id
-#             access_token = str(guest_token)
-
-
-
-#         quizzes = Quiz.objects.all()
-#         quiz_data = []
-
-#         for quiz in quizzes:
-#             categories = Category.objects.filter(quiz=quiz)
-#             filtered_categories = []
-
-#             for category in categories:
-#                 if category.access_mode == "private":
-#                     if not user or not getattr(user, "is_authenticated", False):
-#                         continue
-
-#                 items = Item.objects.filter(category=category)
-#                 filtered_items = []
-
-#                 for item in items:
-#                     if item.access_mode == "private":
-#                         if not user or not getattr(user, "is_authenticated", False):
-#                             continue
-
-#                     quiz_attempt_data = None
-#                     if user and getattr(user, "is_authenticated", False):
-#                         quiz_attempt = QuizAttempt.objects.filter(user=user, item=item).first()
-#                         if quiz_attempt:
-#                             quiz_attempt_data = {
-#                                 "total_questions": quiz_attempt.total_questions,
-#                                 "correct_answers": quiz_attempt.correct_answers,
-#                                 "wrong_answers": quiz_attempt.wrong_answers,
-#                                 "score": quiz_attempt.score,
-#                             }
-
-#                     leaderboard_data = Leaderboard.objects.filter(item=item).order_by('-score')[:10]
-#                     leaderboard = [
-#                         {
-#                             "user": entry.user.username,
-#                             "score": entry.score,
-#                             "rank": entry.rank,
-#                         }
-#                         for entry in leaderboard_data
-#                     ]
-
-#                     filtered_items.append({
-#                         "item_id": str(item.id),
-#                         "item_title": item.title,
-#                         "item_subtitle": item.subtitle,
-#                         "item_button_label": item.button_label or "Play",
-#                         "access_mode": item.access_mode or "public",
-#                         "item_type": item.item_type or "default",
-#                         "quiz_attempt": quiz_attempt_data,
-#                         "leaderboard": leaderboard,
-#                     })
-
-#                 if filtered_items:
-#                     filtered_categories.append({
-#                         "category_id": str(category.id),
-#                         "category_title": category.title,
-#                         "category_type": category.category_type or "default",
-#                         "access_mode": category.access_mode,
-#                         "task_items": filtered_items,
-#                     })
-
-#             quiz_data.append({
-#                 "quiz_id": str(quiz.id),
-#                 "quiz_title": quiz.title,
-#                 "quiz_description": quiz.description,
-#                 "total_questions": quiz.total_questions,
-#                 "created_at": quiz.created_at,
-#                 "updated_at": quiz.updated_at,
-#                 "categories": filtered_categories,
-#             })
-
-#         return Response(
-#             {
-#                 "type": response_type,
-#                 "message": message,
-#                 "data": {
-#                     "quizzes": quiz_data,
-#                     "access_token": access_token,
-#                 },
-#             },
-#             status=status.HTTP_200_OK
-#         )
 
 
 
@@ -913,100 +484,6 @@ class DashboardView(APIView):
 
 
 
-
-
-
-
-
-        
-# class QuestionUploadView(APIView):
-#     authentication_classes = [JWTAuthentication]
-#     permission_classes = [IsAuthenticated]
-
-#     def post(self, request, *args, **kwargs):
-#         # Ensure a file is provided
-#         file = request.FILES.get('file')
-#         if not file:
-#             return Response(
-#                 {
-#                     "type": "error",
-#                     "message": "No file uploaded.",
-#                     "data": {},
-#                 },
-#                 status=status.HTTP_200_OK
-#             )
-
-#         try:
-#             # Parse the uploaded Excel file
-#             df = pd.read_excel(file)
-
-#             # Expected columns
-#             required_columns = [
-#                 'Question', 'Subject', 'Category', 'Options_num', 
-#                 'Option1', 'Option2', 'Option3', 'Option4', 'Answer'
-#             ]
-
-#             if not all(col in df.columns for col in required_columns):
-#                 return Response(
-#                     {
-#                         "type": "error",
-#                         "message": "Excel file is missing required columns.",
-#                         "data": {},
-#                     },
-#                     status=status.HTTP_200_OK
-#                 )
-
-#             with transaction.atomic():  # Ensure atomicity
-#                 for _, row in df.iterrows():
-#                     # Retrieve or validate category and subject (assuming Item represents Subject here)
-#                     category_id = row['Category']
-#                     subject_id = row['Subject']
-#                     question_text = row['Question']
-#                     options_num = int(row['Options_num'])
-#                     answers = row['Answer'].split(',')  # Expected format: "Option1,Option3"
-#                     answers = [answer.strip().capitalize() for answer in answers]  # Ensure answers are properly formatted
-
-#                     # Fetch or create category and subject
-#                     category, created = Category.objects.get_or_create(id=category_id)
-#                     item, created = Item.objects.get_or_create(id=subject_id)
-
-#                     # Create or update the question
-#                     question, created = Question.objects.get_or_create(
-#                         question_text=question_text,
-#                         item=item
-#                     )
-
-#                     # Create or update options
-#                     for i in range(1, options_num + 1):
-#                         option_text = row.get(f'Option{i}')
-#                         if option_text:
-#                             option_text = option_text.capitalize()  # Convert option text to match format (e.g., Option1)
-#                             is_correct = f'Option{i}'.capitalize() in answers
-#                             Option.objects.update_or_create(
-#                                 question=question,
-#                                 option_text=option_text,
-#                                 defaults={'is_correct': is_correct}
-#                             )
-
-#             return Response(
-#                 {
-#                     "type": "success",
-#                     "message": "Questions uploaded successfully!",
-#                     "data": {},
-#                 },
-#                 status=status.HTTP_200_OK
-#             )
-
-#         except Exception as e:
-#             return Response(
-#                 {
-#                     "type": "error",
-#                     "message": str(e),
-#                     "data": {},
-#                 },
-#                 status=status.HTTP_200_OK
-#             )
-
 class QuestionUploadView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -1135,112 +612,7 @@ class QuestionUploadView(APIView):
 
         
         
-# class SubmitAnswerView(APIView):
-#     authentication_classes = [JWTAuthentication]
-#     permission_classes = [IsAuthenticated]
 
-#     def post(self, request, *args, **kwargs):
-#         item_id = request.data.get("item_id")
-#         question_id = request.data.get("question_id")
-#         selected_option_id = request.data.get("selected_option_id")
-#         start_fresh = request.data.get("start_fresh", False)  # Flag for creating a new attempt on refresh
-#         next_question_index = request.data.get("current_question_index", 0) + 1
-
-#         try:
-#             question = Question.objects.get(id=question_id)
-#             selected_option = Option.objects.get(id=selected_option_id, question=question)
-#             item = Item.objects.get(id=item_id)
-#             category = item.category
-#             quiz = category.quiz  # Access the related Quiz
-#         except (Question.DoesNotExist, Option.DoesNotExist, Item.DoesNotExist, Category.DoesNotExist, Quiz.DoesNotExist):
-#             return Response(
-#                 {
-#                     "type": "error",
-#                     "message": "Invalid question, option, or item.",
-#                     "data": {},
-#                 },
-#                 status=status.HTTP_200_OK
-#             )
-
-#         # Negative marking value from the Quiz model
-#         negative_marking = quiz.negative_marking
-
-#         # Always create a new attempt if `start_fresh` is True
-#         if start_fresh:
-#             quiz_attempt = QuizAttempt.objects.create(
-#                 user=request.user,
-#                 item=item,
-#                 total_questions=item.questions.count(),
-#                 correct_answers=0,
-#                 wrong_answers=0,
-#                 score=0,
-#             )
-#         else:
-#             # Resume incomplete attempt or create a new one
-#             quiz_attempt = QuizAttempt.objects.filter(user=request.user, item=item).order_by('-attempt_date').first()
-#             if not quiz_attempt or (quiz_attempt.correct_answers + quiz_attempt.wrong_answers == quiz_attempt.total_questions):
-#                 # No attempts or the last attempt is complete, create a new attempt
-#                 quiz_attempt = QuizAttempt.objects.create(
-#                     user=request.user,
-#                     item=item,
-#                     total_questions=item.questions.count(),
-#                     correct_answers=0,
-#                     wrong_answers=0,
-#                     score=0,
-#                 )
-
-#         # Check if the selected option is correct
-#         if selected_option.is_correct:
-#             quiz_attempt.correct_answers += 1
-#             quiz_attempt.score += 1  # Increment score for correct answer
-#         else:
-#             quiz_attempt.wrong_answers += 1
-#             quiz_attempt.score -= negative_marking  # Decrease score for wrong answer
-
-#         quiz_attempt.save()
-
-#         # Fetch next question
-#         questions = Question.objects.filter(item=item).order_by('id')
-#         if next_question_index < len(questions):
-#             next_question = questions[next_question_index]
-#             options = Option.objects.filter(question=next_question)
-#             answer_set = [
-#                 {"answer_id": str(option.id), "answer": option.option_text}
-#                 for option in options
-#             ]
-
-#             return Response(
-#                 {
-#                     "type": "success",
-#                     "message": "Answer submitted successfully.",
-#                     "data":{
-#                         "data": {
-#                             "is_correct": selected_option.is_correct,
-#                             "next_question": {
-#                                 "question_id": str(next_question.id),
-#                                 "question": next_question.question_text,
-#                                 "answer_set": answer_set,
-#                             },
-#                             "is_last_question": next_question_index + 1 >= len(questions),
-#                         },
-#                     } 
-#                 },
-#                 status=status.HTTP_200_OK
-#             )
-#         else:
-#             return Response(
-#                 {
-#                     "type": "success",
-#                     "message": "Quiz completed successfully.",
-#                     "data": {
-#                         "is_correct": selected_option.is_correct,
-#                         "score": quiz_attempt.score,
-#                         "correct_answers": quiz_attempt.correct_answers,
-#                         "wrong_answers": quiz_attempt.wrong_answers,
-#                     },
-#                 },
-#                 status=status.HTTP_200_OK
-#             )
 
 class SubmitAnswersView(APIView):
     authentication_classes = [CombinedJWTOrGuestAuthentication]
@@ -1400,4 +772,80 @@ class ItemLeaderboardView(APIView):
                 "item_id": item_id,
                 "leaderboard": final_leaderboard
             }
+        }, status=200)
+        
+       
+ 
+class AllItemLeaderboardView(APIView):
+    authentication_classes = [CombinedJWTOrGuestAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        is_authenticated = request.user.is_authenticated
+        print("hello")
+        all_items = Item.objects.all()
+        final_data = []
+
+        for item in all_items:
+            attempts_qs = QuizAttempt.objects.filter(item=item)
+
+            user_scores = defaultdict(lambda: {
+                "total_score": 0,
+                "attempts": 0,
+                "first_attempt_date": None,
+                "user_obj": None
+            })
+
+            # Aggregate data
+            for attempt in attempts_qs:
+                user_obj = attempt.user or attempt.guest_user
+                if not user_obj:
+                    continue
+
+                user_id = user_obj.id
+                entry = user_scores[user_id]
+
+                entry["total_score"] += attempt.score
+                entry["attempts"] += 1
+
+                if entry["first_attempt_date"] is None:
+                    entry["first_attempt_date"] = attempt.attempt_date
+                else:
+                    entry["first_attempt_date"] = min(
+                        entry["first_attempt_date"], 
+                        attempt.attempt_date
+                    )
+
+                entry["user_obj"] = user_obj
+
+            # Sort the leaderboard for this item
+            leaderboard_list = sorted(
+                user_scores.values(),
+                key=lambda x: (-x["total_score"], x["attempts"], x["first_attempt_date"])
+            )
+
+            # Add rank
+            formatted_lb = []
+            for idx, entry in enumerate(leaderboard_list, start=1):
+                user_obj = entry["user_obj"]
+
+                formatted_lb.append({
+                    "userId": user_obj.id,
+                    "userName": user_obj.username if is_authenticated and hasattr(user_obj, "username") else "Anonymous",
+                    "rank": idx,
+                    "total_score": entry["total_score"],
+                    "attempts": entry["attempts"],
+                    "first_attempt_date": entry["first_attempt_date"]
+                })
+
+            final_data.append({
+                "item_id": item.id,
+                "item_title": item.title,
+                "leaderboard": formatted_lb
+            })
+
+        return Response({
+            "type": "success",
+            "message": "All items leaderboard fetched successfully.",
+            "data": final_data
         }, status=200)

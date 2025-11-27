@@ -159,3 +159,31 @@ class UserProfileView(APIView):
                 "profile_image": getattr(user, "profile_picture", None)
             }
         })
+        
+        
+        
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        # Fetch all attempts made by this user (logged-in user only)
+        attempts = QuizAttempt.objects.filter(user=user)
+
+        total_score = attempts.aggregate(total=models.Sum("score"))["total"] or 0
+        total_attempts = attempts.count()
+
+        return Response({
+            "type": "success",
+            "message": "Profile retrieved successfully",
+            "data": {
+                "name": getattr(user, "name", ""),
+                "email": user.email,
+                "profile_image": getattr(user, "profile_picture", None),
+
+                # ✔️ Added statistics
+                "total_attempts": total_attempts,
+                "total_score": total_score,
+            }
+        })

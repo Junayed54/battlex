@@ -14,5 +14,6 @@ urlpatterns = [
     # path('quiz/question/<int:question_id>/', GetQuestionView.as_view(), name='get_next_question'),
     # path('get-question/<int:question_id>/', GetQuestionView.as_view(), name='get-question'),
     path('api/quiz/dashboard/', DashboardView.as_view(), name='dashboard'),
+    path('api/item/leaderboard/', AllItemLeaderboardView.as_view(), name="item-leaderboards"),
     path('api/item/leaderboard/<int:item_id>/', ItemLeaderboardView.as_view(), name="item-leaderboard"),
 ]

@@ -5,7 +5,7 @@ from datetime import timedelta
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
-
+from collections import defaultdict
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAdminUser # Or your custom permission
 from django.db import transaction
@@ -772,3 +772,86 @@ class SubmitTournamentAttemptView(APIView):
                 "leaderboard_score_updated": leaderboard.total_score
             }
         }, status=status.HTTP_200_OK)
+        
+        
+class AllActiveTournamentLeaderboards(APIView):
+    authentication_classes = [CombinedJWTOrGuestAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+
+        active_tournaments = Tournament.objects.filter(status="active")
+
+        result = []
+
+        for t in active_tournaments:
+            attempts = TournamentAttempt.objects.filter(tournament=t)
+
+            user_scores = defaultdict(
+                lambda: {
+                    "total_score": 0,
+                    "attempts": 0,
+                    "first_attempt_date": None,
+                    "user_obj": None
+                }
+            )
+
+            # Aggregate attempt data
+            for attempt in attempts:
+                user_obj = attempt.user or attempt.guest_user
+                if not user_obj:
+                    continue
+
+                uid = f"user_{user_obj.id}"
+
+                user_scores[uid]["total_score"] += attempt.score
+                user_scores[uid]["attempts"] += 1
+                user_scores[uid]["user_obj"] = user_obj
+
+                # Track earliest attempt time
+                if user_scores[uid]["first_attempt_date"] is None:
+                    user_scores[uid]["first_attempt_date"] = attempt.attempt_date
+                else:
+                    user_scores[uid]["first_attempt_date"] = min(
+                        user_scores[uid]["first_attempt_date"],
+                        attempt.attempt_date
+                    )
+
+            # Sorting logic
+            sorted_list = sorted(
+                user_scores.values(),
+                key=lambda x: (
+                    -x["total_score"],
+                    x["attempts"],
+                    x["first_attempt_date"]
+                )
+            )
+
+            # Add ranks
+            leaderboard = []
+            for idx, entry in enumerate(sorted_list, start=1):
+                user_obj = entry["user_obj"]
+
+                leaderboard.append({
+                    "userId": user_obj.id,
+                    "userName": getattr(user_obj, "username", "Anonymous"),
+                    "rank": idx,
+                    "total_score": entry["total_score"],
+                    "attempts": entry["attempts"],
+                    "first_attempt_date": entry["first_attempt_date"]
+                })
+
+            # Append tournament leaderboard
+            result.append({
+                "tournament_id": t.id,
+                "title": t.title,
+                "leaderboard": leaderboard
+            })
+
+        return Response({
+            "type": "success",
+            "message": "Active tournament leaderboards fetched.",
+            "data": {
+                "active_tournaments": result
+            }
+        }, status=200)

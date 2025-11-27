@@ -14,6 +14,8 @@ urlpatterns = [
     path('api/tournaments/<int:tournament_id>/winners/', views.TournamentWinnerListView.as_view(), name='api-tournament-winner-list'),
     path('api/tournaments/<int:tournament_id>/leaderboard/', views.TournamentLeaderboardListView.as_view(), name='api-tournament-leaderboard'),
 
+    path("api/tournaments/leaderboards/active/", AllActiveTournamentLeaderboards.as_view(), name="active_tournament_leaderboards"),
+
     # --- User API Views ---
     path('api/tournaments/user-attempts/', views.UserTournamentAttemptListView.as_view(), name='api-user-attempts'),
 
@@ -29,4 +31,6 @@ urlpatterns = [
     path('api/admin/tournaments/prizes/<int:prize_id>/', views.AdminTournamentPrizeDetailView.as_view(), name='api-admin-prize-detail'),
 
     path('api/admin/tournaments/winners/', views.AdminTournamentWinnerListView.as_view(), name='api-admin-winner-list'),
+    
+
 ]
