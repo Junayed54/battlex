@@ -46,7 +46,6 @@ class WordPuzzleAttempt(models.Model):
     guest = models.ForeignKey(
         UserOpenAccount,
         to_field="id",          # Important: tells Django FK uses CharField primary key
-        db_column="guest_id",   # Make sure DB column matches
         on_delete=models.CASCADE,
         null=True,
         blank=True
