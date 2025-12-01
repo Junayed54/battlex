@@ -7,6 +7,9 @@ from rest_framework.views import APIView
 from .serializers import *
 from quiz.models import *
 from .models import *
+from tournaments.models import *
+from django.db.models import Sum, F, Window
+from django.db.models.functions import Rank
 
 User = get_user_model()
 
@@ -162,28 +165,111 @@ class UserProfileView(APIView):
         
         
         
+# class UserProfileView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         user = request.user
+
+#         # Fetch all attempts made by this user (logged-in user only)
+#         attempts = QuizAttempt.objects.filter(user=user)
+
+#         total_score = attempts.aggregate(total=models.Sum("score"))["total"] or 0
+#         total_attempts = attempts.count()
+
+#         return Response({
+#             "type": "success",
+#             "message": "Profile retrieved successfully",
+#             "data": {
+#                 "name": getattr(user, "name", ""),
+#                 "email": user.email,
+#                 "profile_image": getattr(user, "profile_picture", None),
+
+#                 # ✔️ Added statistics
+#                 "total_attempts": total_attempts,
+#                 "total_score": total_score,
+#             }
+#         })
+
+
+
+
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         user = request.user
+        
+        # --- Overall User Stats (Using Tournament Attempts for consistency, assuming QuizAttempt is related to another app) ---
+        # If QuizAttempt is the correct source for overall stats, keep your original logic for total_score/total_attempts
+        # Otherwise, use TournamentAttempt:
+        all_attempts = TournamentAttempt.objects.filter(user=user)
+        total_score = all_attempts.aggregate(total=Sum("score"))["total"] or 0
+        total_attempts = all_attempts.count()
 
-        # Fetch all attempts made by this user (logged-in user only)
-        attempts = QuizAttempt.objects.filter(user=user)
+        # --- Active Tournament Stats ---
+        
+        # 1. Get all active tournaments
+        # Note: The custom manager should automatically update the status when the queryset is accessed.
+        active_tournaments = Tournament.objects.filter(status='active').prefetch_related('attempts')
+        
+        tournament_stats = []
+        
+        for tournament in active_tournaments:
+            # 2. Get the current user's total score for this specific tournament
+            user_tournament_score = tournament.attempts.filter(user=user).aggregate(
+                total_score=Sum('score')
+            )['total_score'] or 0
 
-        total_score = attempts.aggregate(total=models.Sum("score"))["total"] or 0
-        total_attempts = attempts.count()
+            # 3. Calculate all participants' total scores for this tournament
+            # We group by the user who made the attempt and sum their scores.
+            leaderboard_data = TournamentAttempt.objects.filter(
+                tournament=tournament,
+                is_completed=True # Only consider completed attempts for the leaderboard
+            ).values('user').annotate(
+                total_score=Sum('score')
+            ).order_by('-total_score')
+            
+            # Find the user's rank in the aggregated list
+            user_rank = None
+            
+            # Simple ranking implementation (iterating through the data)
+            current_rank = 0
+            previous_score = None
+            
+            for i, entry in enumerate(leaderboard_data):
+                # Handle ties by keeping the same rank for the same score
+                if previous_score is None or entry['total_score'] < previous_score:
+                    current_rank = i + 1
+                
+                if entry['user'] == user.id:
+                    user_rank = current_rank
+                    break
+                
+                previous_score = entry['total_score']
+            
+            tournament_stats.append({
+                'id': tournament.id,
+                'name': tournament.title,
+                'user_score': user_tournament_score,
+                'user_rank': user_rank or 'N/A' # N/A if user has no completed attempts
+            })
 
+
+        # 4. Construct the Final Response
         return Response({
             "type": "success",
-            "message": "Profile retrieved successfully",
+            "message": "Profile and Tournament Stats retrieved successfully",
             "data": {
                 "name": getattr(user, "name", ""),
                 "email": user.email,
                 "profile_image": getattr(user, "profile_picture", None),
 
-                # ✔️ Added statistics
-                "total_attempts": total_attempts,
-                "total_score": total_score,
+                # # Overall statistics
+                # "total_attempts": total_attempts,
+                # "total_score": total_score,
+                
+                # Active Tournament Stats
+                "tournaments": tournament_stats
             }
         })

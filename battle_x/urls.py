@@ -10,6 +10,8 @@ urlpatterns = [
     path('', include("quiz.urls")),
     path('', include("users.urls")),
     path('', include("tournaments.urls")),
+    path('', include("wordMaster.urls")),
+    
 ]
 
 

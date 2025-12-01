@@ -18,6 +18,7 @@ import uuid
 
 from tournaments.models import *
 
+from wordMaster.models import *
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -466,6 +467,24 @@ class DashboardView(APIView):
                 "status": tournament.status
                 # Add any other fields you want to expose
             })
+            
+            
+        # --------------------------
+        # Step 6: Active Puzzles
+        # --------------------------
+        active_puzzles = WordPuzzle.objects.filter(status="active")
+        puzzles_data = [
+            {
+                "id": puzzle.id,
+                "title": puzzle.title,
+                "banner": puzzle.banner.url if puzzle.banner else None,
+                "start_date": puzzle.start_date,
+                "end_date": puzzle.end_date,
+                "status": puzzle.status,
+            }
+            for puzzle in active_puzzles
+        ]
+
 
         return Response(
             {
@@ -474,6 +493,7 @@ class DashboardView(APIView):
                 "data": {
                     "quizzes": quiz_data,
                     "tournaments": tournaments_data,
+                    "puzzles": puzzles_data,  
                     "access_token": access_token,
                 },
             },

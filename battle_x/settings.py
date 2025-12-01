@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'users',
     'quiz',
     'tournaments',
+    'wordMaster',
 ]
 
 MIDDLEWARE = [
