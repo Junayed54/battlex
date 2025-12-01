@@ -43,7 +43,14 @@ class Word(models.Model):
 
 class WordPuzzleAttempt(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
-    guest = models.ForeignKey(UserOpenAccount, on_delete=models.CASCADE, null=True, blank=True)
+    guest = models.ForeignKey(
+        UserOpenAccount,
+        to_field="id",          # Important: tells Django FK uses CharField primary key
+        db_column="guest_id",   # Make sure DB column matches
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
 
     puzzle = models.ForeignKey(WordPuzzle, on_delete=models.CASCADE)
     word = models.ForeignKey(Word, on_delete=models.CASCADE)
