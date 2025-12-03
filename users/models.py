@@ -40,7 +40,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class UserOpenAccount(models.Model):
-    id = models.CharField(max_length=36, primary_key=True)  # UUID or unique string
+    uuid = models.CharField(max_length=36, editable=False, unique=True)  # UUID or unique string
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="open_accounts")
 
     ip_address = models.GenericIPAddressField(null=True, blank=True)

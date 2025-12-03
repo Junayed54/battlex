@@ -23,7 +23,7 @@ class UserActivityMiddleware:
             user_account, _ = UserOpenAccount.objects.get_or_create(
                 user=request.user,
                 defaults={
-                    "id": str(uuid.uuid4()),
+                    "uuid": str(uuid.uuid4()),
                     "ip_address": self.get_client_ip(request),
                     "user_agent": request.META.get("HTTP_USER_AGENT", ""),
                     "device": "Unknown",
@@ -39,7 +39,7 @@ class UserActivityMiddleware:
             guest_id = self.extract_guest_id_from_jwt(request)
             if guest_id:
                 user_account, _ = UserOpenAccount.objects.get_or_create(
-                    id=guest_id,
+                    uuid=guest_id,
                     defaults={
                         "ip_address": self.get_client_ip(request),
                         "user_agent": request.META.get("HTTP_USER_AGENT", ""),
@@ -55,7 +55,7 @@ class UserActivityMiddleware:
                 # Generate a unique guest ID based on the IP address (only for new guests)
                 guest_id = self.generate_guest_id(request)
                 user_account, _ = UserOpenAccount.objects.get_or_create(
-                    id=guest_id,
+                    uuid=guest_id,
                     defaults={
                         "ip_address": self.get_client_ip(request),
                         "user_agent": request.META.get("HTTP_USER_AGENT", ""),
@@ -122,13 +122,13 @@ class GuestAuthentication(BaseAuthentication):
             token = auth_header.split(' ')[1]  # Extract token after "Bearer"
             print(f"Processing guest token: {token}")
 
-            guest_account = UserOpenAccount.objects.filter(id=token, status='active').first()
+            guest_account = UserOpenAccount.objects.filter(uuid=token, status='active').first()
 
             if not guest_account:
                 print(f"Error: No active guest account found for token: {token}")
                 raise AuthenticationFailed("Invalid or inactive guest token")
 
-            print(f"Authenticated guest: {guest_account.id}")
+            print(f"Authenticated guest: {guest_account.uuid}")
             return (guest_account, None)
 
         except Exception as e:
@@ -158,7 +158,7 @@ class CombinedJWTOrGuestAuthentication(BaseAuthentication):
                 decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
                 if decoded.get("is_guest") is True and decoded.get("open_account_id"):
                     guest_id = decoded["open_account_id"]
-                    guest_user = UserOpenAccount.objects.filter(id=guest_id, status='active').first()
+                    guest_user = UserOpenAccount.objects.filter(uuid=guest_id, status='active').first()
                     if guest_user:
                         request.user = guest_user
                         return (guest_user, None)

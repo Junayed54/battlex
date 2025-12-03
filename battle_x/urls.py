@@ -7,10 +7,10 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include("quiz.urls")),
     path('', include("users.urls")),
-    path('', include("tournaments.urls")),
-    path('', include("wordMaster.urls")),
+    path('', include("quiz.urls")),
+    # path('', include("tournaments.urls")),
+    # path('', include("wordMaster.urls")),
     
 ]
 

@@ -12,7 +12,7 @@ def log_login(sender, request, user, **kwargs):
     os = request.headers.get("OS", "Unknown")
 
     UserOpenAccount.objects.update_or_create(
-        id=str(user.id),
+        uuid=str(user.uuid),
         defaults={
             "ip_address": ip_address,
             "user_agent": user_agent,
@@ -27,7 +27,7 @@ def log_login(sender, request, user, **kwargs):
 @receiver(user_logged_out)
 def log_logout(sender, request, user, **kwargs):
     try:
-        user_account = UserOpenAccount.objects.get(id=str(user.id))
+        user_account = UserOpenAccount.objects.get(uuid=str(user.uuid))
         user_account.status = "limited"  # Mark as limited on logout
         user_account.save(update_fields=["status"])
     except UserOpenAccount.DoesNotExist:

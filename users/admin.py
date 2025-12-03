@@ -34,7 +34,7 @@ admin.site.register(User, UserAdmin)
 
 @admin.register(UserOpenAccount)
 class UserOpenAccountAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "ip_address", "device", "browser", "os", "first_seen_at", "last_seen_at", "status")
+    list_display = ("uuid", "user", "ip_address", "device", "browser", "os", "first_seen_at", "last_seen_at", "status")
     list_filter = ("status", "os", "browser", "device", "first_seen_at")
     search_fields = ("id", "ip_address", "user_agent", "device", "browser", "os")
     readonly_fields = ("id", "first_seen_at", "last_seen_at")
