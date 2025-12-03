@@ -9,8 +9,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include("users.urls")),
     path('', include("quiz.urls")),
-    # path('', include("tournaments.urls")),
-    # path('', include("wordMaster.urls")),
+    path('', include("tournaments.urls")),
+    path('', include("wordMaster.urls")),
     
 ]
 
