@@ -75,24 +75,24 @@ AUTH_USER_MODEL = 'users.User'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
-
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'battle_x',  # Your database name
-#         'USER': 'root',     # The new user you just created
-#         'PASSWORD': 'Bridgers@123',  # The password for the new user
-#         'HOST': 'localhost',
-#         'PORT': '3306',  # Default MySQL port
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'battle_x',  # Your database name
+        'USER': 'root',     # The new user you just created
+        'PASSWORD': 'Bridgers@123',  # The password for the new user
+        'HOST': 'localhost',
+        'PORT': '3306',  # Default MySQL port
+    }
+}
 
 CACHES = {
     'default': {
