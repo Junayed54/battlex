@@ -10,7 +10,7 @@ urlpatterns = [
     # path("api/puzzles/<int:puzzle_id>/", PuzzleDetailView.as_view(), name="puzzle-detail"),
 
     # POST Submit Attempt for a Word
-    # path("api/puzzles/submit-attempt/", SubmitWordAttemptView.as_view(), name="submit-attempt"),
+    path("api/puzzles/submit/", SubmitPuzzleAnswerView.as_view(), name="submit-attempt"),
 
     # GET Summary for one puzzle (user-specific)
     # path("api/puzzles/<int:puzzle_id>/summary/", PuzzleSummaryView.as_view(), name="puzzle-summary"),
