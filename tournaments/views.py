@@ -26,6 +26,8 @@ from .models import *
 from quiz.models import Question, Option # Adjust import if quiz app is structured differently
 from quiz.serializers import QuestionSerializer # Assuming you have a serializer for Question
 
+# from rest_framework_simplejwt.tokens import AccessToken
+
 # Helper function to process the excel file (re-used from previous example)
 def process_excel_for_questions(file, tournament):
     """
@@ -853,5 +855,276 @@ class AllActiveTournamentLeaderboards(APIView):
             "message": "Active tournament leaderboards fetched.",
             "data": {
                 "active_tournaments": result
+            }
+        }, status=200)
+
+
+
+# class AllActiveTournamentLeaderboards(APIView):
+#     authentication_classes = [CombinedJWTOrGuestAuthentication]
+#     permission_classes = [AllowAny]
+
+#     def get(self, request, *args, **kwargs):
+
+#         active_tournaments = Tournament.objects.filter(status="active")
+
+#         result = []
+
+#         for t in active_tournaments:
+
+#             # -----------------------------------
+#             # (1) TOURNAMENT LEADERBOARD
+#             # -----------------------------------
+
+#             attempts = TournamentAttempt.objects.filter(
+#                 tournament=t
+#             ).select_related("user", "guest_user")
+
+#             user_scores = defaultdict(
+#                 lambda: {
+#                     "total_score": 0,
+#                     "attempts": 0,
+#                     "first_attempt_date": None,
+#                     "user_obj": None
+#                 }
+#             )
+
+#             for attempt in attempts:
+#                 user_obj = attempt.user or attempt.guest_user
+#                 if not user_obj:
+#                     continue
+
+#                 uid = f"user_{user_obj.id}"
+
+#                 user_scores[uid]["total_score"] += attempt.score
+#                 user_scores[uid]["attempts"] += 1
+#                 user_scores[uid]["user_obj"] = user_obj
+
+#                 # Track earliest attempt time
+#                 if user_scores[uid]["first_attempt_date"] is None:
+#                     user_scores[uid]["first_attempt_date"] = attempt.attempt_date
+#                 else:
+#                     user_scores[uid]["first_attempt_date"] = min(
+#                         user_scores[uid]["first_attempt_date"],
+#                         attempt.attempt_date
+#                     )
+
+#             # Sorting logic
+#             sorted_list = sorted(
+#                 user_scores.values(),
+#                 key=lambda x: (
+#                     -x["total_score"],     # high score wins
+#                     x["attempts"],         # fewer attempts is better
+#                     x["first_attempt_date"]  # earlier is better
+#                 )
+#             )
+
+#             tournament_leaderboard = []
+#             for idx, entry in enumerate(sorted_list, start=1):
+#                 user_obj = entry["user_obj"]
+
+#                 tournament_leaderboard.append({
+#                     "userId": user_obj.id,
+#                     "userName": getattr(user_obj, "username", "Anonymous"),
+#                     "rank": idx,
+#                     "total_score": entry["total_score"],
+#                     "attempts": entry["attempts"],
+#                     "first_attempt_date": entry["first_attempt_date"]
+#                 })
+
+#             # -----------------------------------
+#             # (2) WORD PUZZLE LEADERBOARDS
+#             # -----------------------------------
+
+#             word_puzzle_leaderboards = []
+
+#             # Only get puzzles connected to the tournament
+#             puzzles = WordPuzzle.objects.filter(
+#                 tournament=t
+#             )
+
+#             for p in puzzles:
+
+#                 puzzle_attempts = WordPuzzleAttempt.objects.filter(
+#                     puzzle=p
+#                 ).select_related("user", "guest")
+
+#                 puzzle_scores = defaultdict(
+#                     lambda: {
+#                         "correct": 0,
+#                         "attempts": 0,
+#                         "user_obj": None
+#                     }
+#                 )
+
+#                 for att in puzzle_attempts:
+#                     user_obj = att.user or att.guest
+#                     if not user_obj:
+#                         continue
+
+#                     uid = f"user_{user_obj.id}"
+
+#                     if att.is_correct:
+#                         puzzle_scores[uid]["correct"] += 1
+
+#                     puzzle_scores[uid]["attempts"] += 1
+#                     puzzle_scores[uid]["user_obj"] = user_obj
+
+#                 # Sorting: more correct answers first, fewer attempts better
+#                 sorted_puzzle_scores = sorted(
+#                     puzzle_scores.values(),
+#                     key=lambda x: (
+#                         -x["correct"],
+#                         x["attempts"],
+#                     )
+#                 )
+
+#                 puzzle_board = []
+#                 for idx, entry in enumerate(sorted_puzzle_scores, start=1):
+#                     user_obj = entry["user_obj"]
+
+#                     puzzle_board.append({
+#                         "userId": user_obj.id,
+#                         "userName": getattr(user_obj, "username", "Anonymous"),
+#                         "rank": idx,
+#                         "correct": entry["correct"],
+#                         "attempts": entry["attempts"],
+#                     })
+
+#                 word_puzzle_leaderboards.append({
+#                     "puzzle_id": p.id,
+#                     "title": p.title,
+#                     "leaderboard": puzzle_board
+#                 })
+
+#             # Add everything to the tournament
+#             result.append({
+#                 "tournament_id": t.id,
+#                 "title": t.title,
+#                 "leaderboard": tournament_leaderboard,
+#                 "word_puzzle_leaderboards": word_puzzle_leaderboards
+#             })
+
+#         return Response({
+#             "type": "success",
+#             "message": "Active tournament leaderboards fetched.",
+#             "data": {
+#                 "active_tournaments": result
+#             }
+#         }, status=200)
+
+
+class SubmitTournamentPuzzleAPIView(APIView):
+    """
+    Submit answers for a tournament puzzle one by one.
+    """
+    authentication_classes = [CombinedJWTOrGuestAuthentication]
+    permission_classes = [AllowAny]  # Adjust if only logged-in users allowed
+
+    def post(self, request, *args, **kwargs):
+        tournament_id = request.data.get("tournament_id")
+        puzzle_id = request.data.get("puzzle_id")
+        word_id = request.data.get("word_id")
+        user_answer = request.data.get("answer")
+        time_taken = request.data.get("time_taken", 0)
+
+        if not all([tournament_id, puzzle_id, word_id, user_answer]):
+            return Response({"error": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # ---------------------------
+        # Step 1: Authenticate user or guest
+        # ---------------------------
+        user = None
+        guest_user = None
+
+        try:
+            auth_result = CombinedJWTOrGuestAuthentication().authenticate(request)
+            if auth_result:
+                user_or_guest, _ = auth_result
+                if hasattr(user_or_guest, 'is_authenticated') and user_or_guest.is_authenticated:
+                    user = user_or_guest
+                else:
+                    guest_user = user_or_guest
+        except Exception as e:
+            return Response({"error": f"Authentication failed: {str(e)}"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # ---------------------------
+        # Step 2: Validate tournament and puzzle
+        # ---------------------------
+        tournament = get_object_or_404(Tournament, id=tournament_id)
+        puzzle = get_object_or_404(WordPuzzle, id=puzzle_id, tournaments=tournament)
+
+        # ---------------------------
+        # Step 3: Get or create puzzle attempt
+        # ---------------------------
+        attempt, created = TournamentPuzzleAttempt.objects.get_or_create(
+            tournament=tournament,
+            wordPuzzle=puzzle,
+            defaults={
+                "user": user,
+                "guest_user": guest_user,
+                "total_words": puzzle.words.count(),
+            }
+        )
+
+        # Ensure ownership
+        if not created:
+            if user and attempt.user != user:
+                return Response({"error": "This puzzle attempt belongs to another user."}, status=400)
+            if guest_user and attempt.guest_user != guest_user:
+                return Response({"error": "This puzzle attempt belongs to another guest."}, status=400)
+
+        # ---------------------------
+        # Step 4: Check the word
+        # ---------------------------
+        word = get_object_or_404(Word, id=word_id, puzzle=puzzle)
+        is_correct = word.text.strip().lower() == user_answer.strip().lower()
+
+        if is_correct:
+            attempt.correct_words += 1
+        else:
+            attempt.wrong_words += 1
+
+        attempt.time_taken += int(time_taken)
+
+        # ---------------------------
+        # Step 5: Check if puzzle completed
+        # ---------------------------
+        if attempt.correct_words + attempt.wrong_words >= attempt.total_words:
+            attempt.is_completed = True
+
+        # Score calculation
+        attempt.score = attempt.correct_words
+        attempt.save()
+
+        # ---------------------------
+        # Step 6: Determine next word
+        # ---------------------------
+        next_word = None
+        if not attempt.is_completed:
+            answered_ids = request.data.get("answered_ids", [])
+            remaining_words = puzzle.words.exclude(id__in=answered_ids)
+            if remaining_words.exists():
+                next_word_obj = remaining_words.first()
+                next_word = {
+                    "id": next_word_obj.id,
+                    "text_hint": next_word_obj.hint,
+                    "difficulty": next_word_obj.difficulty
+                }
+
+        # ---------------------------
+        # Step 7: Response
+        # ---------------------------
+        return Response({
+            "type": "success",
+            "message": "Word submitted successfully.",
+            "data": {
+                "is_correct": is_correct,
+                "correct_words": attempt.correct_words,
+                "wrong_words": attempt.wrong_words,
+                "skipped_words": attempt.skipped_words,
+                "score": attempt.score,
+                "is_completed": attempt.is_completed,
+                "next_word": next_word
             }
         }, status=200)

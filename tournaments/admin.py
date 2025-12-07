@@ -20,6 +20,10 @@ class TournamentAdmin(admin.ModelAdmin):
         ('Questions', {
             'fields': ('questions',)
         }),
+        ('wordpuzzles', {
+            'fields': ('wordpuzzles',)
+        }),
+        
     )
     filter_horizontal = ('questions',)
     ordering = ['-start_date']

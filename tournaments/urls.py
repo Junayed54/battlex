@@ -32,5 +32,7 @@ urlpatterns = [
 
     path('api/admin/tournaments/winners/', views.AdminTournamentWinnerListView.as_view(), name='api-admin-winner-list'),
     
+    
+    path('api/tournaments/puzzle/submit/', views.SubmitTournamentPuzzleAPIView.as_view(), name="tournmanent-puzzle-submit"),
 
 ]

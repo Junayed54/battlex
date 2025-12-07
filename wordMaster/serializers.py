@@ -17,7 +17,7 @@ class PuzzleSerializer(serializers.ModelSerializer):
         
         now = timezone.now()
 
-        if obj.start_date <= now <= obj.end_date:
+        if obj.status=="active":
             return "active"
         return "inactive"
 

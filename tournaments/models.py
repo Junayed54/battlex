@@ -2,7 +2,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone # For timezone.now()
-
+from wordMaster.models import *
 # Assuming UserOpenAccount is in your 'user' app's models.py
 # You need to make sure this import path is correct for your project structure
 from users.models import UserOpenAccount 
@@ -78,6 +78,14 @@ class Tournament(models.Model):
         blank=True,
         help_text="The pool of questions from which users will be tested."
     )
+    
+    # Puzzle items
+    wordpuzzles = models.ManyToManyField(
+        WordPuzzle,
+        blank=True,
+        related_name="tournaments"
+    )
+    
     max_total_attempts = models.PositiveIntegerField(
         null=True,
         blank=True,
@@ -156,7 +164,37 @@ class Tournament(models.Model):
     def __str__(self):
         return self.title
     
-    
+class TournamentPuzzleAttempt(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    guest_user = models.ForeignKey(UserOpenAccount, on_delete=models.CASCADE, null=True, blank=True)
+
+    tournament = models.ForeignKey(
+        Tournament,
+        on_delete=models.CASCADE,
+        related_name="puzzle_attempts"
+    )
+
+    wordPuzzle = models.ForeignKey(
+        WordPuzzle,
+        on_delete=models.CASCADE,
+        related_name="tournament_attempts"
+    )
+
+    total_words = models.PositiveIntegerField(default=0)
+    correct_words = models.PositiveIntegerField(default=0)
+    wrong_words = models.PositiveIntegerField(default=0)
+    skipped_words = models.PositiveIntegerField(default=0)
+
+    score = models.FloatField(default=0)
+    time_taken = models.PositiveIntegerField(default=0)
+
+    is_completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        who = self.user.email if self.user else f"Guest({self.guest_user_id})"
+        return f"{who} - Puzzle Attempt ({self.puzzle.title})"
+
     
     
 class TournamentPrize(models.Model):

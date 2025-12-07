@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from .models import *
 from quiz.models import Question, Option # Assuming your quiz app models
-
+from wordMaster.serializers import *
 User = get_user_model()
 
 class TournamentQuestionUploadSerializer(serializers.Serializer):
@@ -35,13 +35,14 @@ class TournamentPrizeSerializer(serializers.ModelSerializer):
 class TournamentSerializer(serializers.ModelSerializer):
     prizes = TournamentPrizeSerializer(many=True, read_only=True)
     # questions = QuestionSerializer(many=True, read_only=True) # Optional: if you want to embed all questions in tournament list/detail
+    wordPuzzles = PuzzleSerializer(many=True, read_only=True, source='wordpuzzles')
 
     class Meta:
         model = Tournament
         fields = [
             'id', 'title', 'subtitle', 'description', 'banner_image', 'frequency', 'start_date', 'end_date',
             'max_total_attempts', 'max_questions_per_attempt', 'max_attempts_per_day',
-            'negative_marking', 'duration_minutes', 'status', 'prizes',
+            'negative_marking', 'duration_minutes', 'status', 'prizes', 'wordPuzzles',
             'created_at', 'updated_at'
         ]
         read_only_fields = ('created_at', 'updated_at', 'status') # Admins might change status
