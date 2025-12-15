@@ -202,7 +202,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://161.97.141.58:8081",
     "http://localhost:8081",
     "http://127.0.0.1:8001",
-    "http://161.97.141.58:8001"
+    "http://161.97.141.58:8001",
+    "http://jobs.academy"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
