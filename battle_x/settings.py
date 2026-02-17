@@ -33,8 +33,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'users',
     'quiz',
-    'tournaments',
-    'wordMaster',
+    # 'tournaments',
+    # 'wordMaster',
 ]
 
 MIDDLEWARE = [
