@@ -319,7 +319,7 @@ class TournamentWinner(models.Model):
         ordering = ['-award_date']
         constraints = [
             models.CheckConstraint(
-                check=models.Q(user__isnull=False, guest_user__isnull=True) |
+                condition=models.Q(user__isnull=False, guest_user__isnull=True) |
                       models.Q(user__isnull=True, guest_user__isnull=False),
                 name='either_user_or_guest_user_for_winner'
             )
@@ -393,7 +393,7 @@ class TournamentAttempt(models.Model):
         # Constraint to ensure either user or guest_user is set, but not both
         constraints = [
             models.CheckConstraint(
-                check=models.Q(user__isnull=False, guest_user__isnull=True) |
+                condition=models.Q(user__isnull=False, guest_user__isnull=True) |
                       models.Q(user__isnull=True, guest_user__isnull=False),
                 name='either_user_or_guest_user_for_tournament_attempt'
             )
@@ -477,7 +477,7 @@ class TournamentLeaderboard(models.Model):
         # Constraint to ensure either user or guest_user is set, but not both
         constraints = [
             models.CheckConstraint(
-                check=models.Q(user__isnull=False, guest_user__isnull=True) |
+                condition=models.Q(user__isnull=False, guest_user__isnull=True) |
                       models.Q(user__isnull=True, guest_user__isnull=False),
                 name='either_user_or_guest_user_for_tournament_leaderboard'
             )
