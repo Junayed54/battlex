@@ -109,3 +109,163 @@ class WordAttempt(models.Model):
     def __str__(self):
         status = "Correct" if self.is_correct else "Wrong"
         return f"{self.word.text} ({status})"
+    
+    
+    
+class RewardRule(models.Model):
+    
+    RULE_TYPES = [
+        ("correct_word", "Correct Word"),
+        ("puzzle_complete", "Puzzle Completion"),
+        ("speed_bonus", "Speed Bonus"),
+        ("accuracy_bonus", "Accuracy Bonus"),
+    ]
+
+    rule_type = models.CharField(max_length=50, choices=RULE_TYPES)
+
+    points = models.PositiveIntegerField(
+        help_text="Points awarded for this rule"
+    )
+
+    min_correct_words = models.PositiveIntegerField(
+        null=True,
+        blank=True
+    )
+
+    max_time_seconds = models.PositiveIntegerField(
+        null=True,
+        blank=True
+    )
+
+    description = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.rule_type} - {self.points} points"
+    
+    
+
+
+class RewardEvent(models.Model):
+    
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+
+    guest = models.ForeignKey(
+        UserOpenAccount,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+
+    puzzle_attempt = models.ForeignKey(
+        PuzzleAttempt,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+
+    rule = models.ForeignKey(
+        RewardRule,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+
+    points = models.IntegerField()
+
+    reason = models.CharField(max_length=150)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        if self.user:
+            return f"{self.user.email} - {self.points} points"
+        return f"Guest({self.guest_id}) - {self.points} points"
+    
+    
+    
+
+
+class UserRewardBalance(models.Model):
+    
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+
+    guest = models.OneToOneField(
+        UserOpenAccount,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+
+    total_points = models.PositiveIntegerField(default=0)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def add_points(self, points):
+        self.total_points += points
+        self.save()
+
+    def subtract_points(self, points):
+        if self.total_points >= points:
+            self.total_points -= points
+            self.save()
+
+    def __str__(self):
+        if self.user:
+            return f"{self.user.email} - {self.total_points}"
+        return f"Guest({self.guest_id}) - {self.total_points}"
+    
+    
+    
+class RewardClaim(models.Model):
+    
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected")
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE
+    )
+
+    points_used = models.PositiveIntegerField()
+
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    processed_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    note = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.amount}"

@@ -25,7 +25,7 @@ class PuzzleSerializer(serializers.ModelSerializer):
 class WordSerializer(serializers.ModelSerializer):
     class Meta:
         model = Word
-        fields = ["id", "text", "hint", "difficulty", "is_active"]
+        fields = ["id", "text", "hint", "difficulty"]
 
 
 
@@ -35,3 +35,43 @@ class PuzzleWordSerializer(serializers.ModelSerializer):
     class Meta:
         model = WordPuzzle
         fields = ["id", "puzzle", "word", "order"]
+
+
+
+
+class WordExcelUploadSerializer(serializers.Serializer):
+    puzzle_id = serializers.IntegerField()
+    file = serializers.FileField()
+
+
+
+class RewardBalanceSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = UserRewardBalance
+        fields = ["total_points"]
+
+
+class RewardEventSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = RewardEvent
+        fields = [
+            "id",
+            "points",
+            "reason",
+            "created_at"
+        ]
+
+
+class RewardClaimSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = RewardClaim
+        fields = [
+            "id",
+            "points_used",
+            "amount",
+            "status",
+            "created_at"
+        ]

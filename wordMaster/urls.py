@@ -18,9 +18,15 @@ urlpatterns = [
     # 2️⃣ START Puzzle (Create Attempt)
     # -----------------------------------------
     path(
-        "api/puzzles/<int:puzzle_id>/start/",
+        "api/puzzles/start/",
         StartPuzzleView.as_view(),
         name="start-puzzle"
+    ),
+    
+    path(
+        "api/puzzles/upload-words-excel/",
+        UploadWordsExcelAPIView.as_view(),
+        name="upload_words_excel"
     ),
 
     # -----------------------------------------
@@ -37,7 +43,7 @@ urlpatterns = [
     # -----------------------------------------
     path(
         "api/puzzle-attempt/submit/",
-        SubmitPuzzleAnswerView.as_view(),
+        SubmitPuzzleAllAnswersView.as_view(),
         name="submit-puzzle-answer"
     ),
 
@@ -61,8 +67,45 @@ urlpatterns = [
     
     
     path(
-        "api/puzzles/<int:puzzle_id>/leaderboard/",
+        "api/puzzles/leaderboard/",
         PuzzleLeaderboardView.as_view(),
         name="puzzle-leaderboard"
     )
 ]
+
+
+
+### rewards endpoints
+
+
+
+urlpatterns += [
+
+    path(
+        "api/rewards/calculate/",
+        CalculateRewardAPIView.as_view()
+    ),
+
+    # path(
+    #     "api/rewards/my-points/",
+    #     MyPointsAPIView.as_view()
+    # ),
+
+    path(
+        "api/rewards/history/",
+        RewardHistoryAPIView.as_view()
+    ),
+
+    path(
+        "api/rewards/leaderboard/",
+        LeaderboardAPIView.as_view()
+    ),
+
+    path(
+        "api/rewards/claim/",
+        ClaimRewardAPIView.as_view()
+    ),
+
+]
+
+
