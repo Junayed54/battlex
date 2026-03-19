@@ -11,7 +11,7 @@ class PuzzleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WordPuzzle
-        fields = ["id", "title", "start_date", "end_date", "status", "banner"]
+        fields = '__all__'
 
     def get_status(self, obj):
         

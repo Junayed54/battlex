@@ -1,16 +1,16 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, viewsets
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.db.models import Q
 import pandas as pd
-
+from rest_framework.permissions import IsAdminUser
 from .models import WordPuzzle, Word, PuzzleAttempt, WordAttempt
 from .serializers import *
 import random
 from users.models import UserOpenAccount
-
+from rest_framework.parsers import MultiPartParser, FormParser
 from users.middleware import CombinedJWTOrGuestAuthentication
 
 import jwt
@@ -107,6 +107,23 @@ class PuzzleListView(APIView):
             "data": PuzzleSerializer(puzzles, many=True).data
         })
         
+class WordPuzzleAdminViewSet(viewsets.ModelViewSet):
+    """
+    A ViewSet for Admins to Create, Update, and Delete Word Puzzles.
+    """
+    queryset = WordPuzzle.objects.all().order_by('-created_at')
+    serializer_class = PuzzleSerializer
+    permission_classes = [IsAdminUser]
+    
+    # Parsers allow for Image/File uploads via Form-Data
+    # parser_classes = (MultiPartParser, FormParser)
+
+    def get_queryset(self):
+        # Optional: Add filters for the admin list view
+        status = self.request.query_params.get('status')
+        if status:
+            return self.queryset.filter(status=status)
+        return self.queryset
         
         
 class UploadWordsExcelAPIView(APIView):
