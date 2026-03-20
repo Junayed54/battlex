@@ -18,6 +18,7 @@ class WordInline(admin.TabularInline):
 class WordPuzzleAdmin(admin.ModelAdmin):
     list_display = (
         "title",
+        "description",
         "status",
         "start_date",
         "end_date",

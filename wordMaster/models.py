@@ -6,6 +6,7 @@ User = get_user_model()
 
 class WordPuzzle(models.Model):
     title = models.CharField(max_length=200)
+    description = models.TextField(null=True, blank=True)
     banner = models.ImageField(upload_to="puzzle_banners/", null=True, blank=True)
 
     start_date = models.DateTimeField(null=True, blank=True)
