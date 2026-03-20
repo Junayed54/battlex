@@ -8,7 +8,7 @@ class WordPuzzle(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(null=True, blank=True)
     banner = models.ImageField(upload_to="puzzle_banners/", null=True, blank=True)
-
+    time_limit = models.PositiveIntegerField(null=True, blank=True, help_text="Time limit in seconds")
     start_date = models.DateTimeField(null=True, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)
 

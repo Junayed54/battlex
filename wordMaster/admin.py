@@ -20,6 +20,7 @@ class WordPuzzleAdmin(admin.ModelAdmin):
         "title",
         "description",
         "status",
+        "time_limit",
         "start_date",
         "end_date",
         "created_at"
