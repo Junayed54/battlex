@@ -178,7 +178,7 @@ class StartPuzzleView(APIView):
     def post(self, request):
         puzzle_id = request.data.get("puzzle_id")
         print(puzzle_id)
-        user, guest = get_request_user(request)
+        # user, guest = get_request_user(request)
         puzzle = get_object_or_404(WordPuzzle, id=puzzle_id)
 
         # existing_attempt = PuzzleAttempt.objects.filter(
